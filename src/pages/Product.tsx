@@ -1,27 +1,32 @@
 import React from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useCatalog } from '../store/catalog';
-import { useCart } from '../store/cart';  // Hook to manage cart state
+import { useCart } from '../store/cart';  
 
 const Product = () => {
-  const { slug } = useParams();  // Get slug from URL
-  const products = useCatalog(s => s.products);  // Fetch products from store
-  const { addToCart } = useCart();  // Access the addToCart method from the cart store
-  const product = products.find(p => p.slug === slug);  // Find the product by slug
+  const { slug } = useParams(); 
+  const products = useCatalog(s => s.products);  
+  const { addToCart } = useCart(); 
+  const product = products.find(p => p.slug === slug);  
 
   if (!product) {
-    return <div>Product not found!</div>;  // Handle product not found
+    return <div>Product not found!</div>;  
   }
 
   const handleAddToCart = () => {
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.images[0],  // Assuming the first image is the main image
-      qty: 1,  // Default quantity is 1
-    });
+    if (product) {
+      addToCart({
+        id: product.id,
+        name: product.name,
+        slug: product.slug,
+        price: product.price,
+        images: product.images,  
+        qty: 1,
+      });
+    }
   };
+  
+  
 
   return (
     <div className="product-detail grid grid-cols-1 md:grid-cols-2 gap-10">

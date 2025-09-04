@@ -22,7 +22,7 @@ export default function Cart() {
       <div className="md:col-span-2 space-y-3">
         {items.map((i) => (
           <div key={i.id} className="flex gap-3 items-center border rounded-xl p-3">
-            <img src={i.image} className="w-20 h-20 object-cover rounded" />
+<img src={i.images[0]} className="w-20 h-20 object-cover rounded" />
             <div className="flex-1">
               <div className="font-medium">{i.name}</div>
               <div className="text-sm text-gray-600">{NGN.format(i.price)}</div>
