@@ -1,76 +1,10 @@
-// import { FormEvent, useMemo, useState } from 'react'
-// import { useCart } from '../store/cart'
-// import BankPanel from '../components/BankPanel'
-// import { buildWhatsAppOrderText, whatsappCheckoutURL } from '../utils/whatsapp'
-
-// export default function Checkout() {
-//   const { items } = useCart()
-//   const [name, setName] = useState('')
-//   const [phone, setPhone] = useState('')
-//   const [address, setAddress] = useState('')
-//   const [note, setNote] = useState('')
-
-//   const disabled = useMemo(() => !name || !phone || !address || items.length===0, [name, phone, address, items])
-
-//   const onSubmit = (e: FormEvent) => {
-//     e.preventDefault()
-//     const text = buildWhatsAppOrderText({ customer: { name, phone, address }, items, note })
-//     const url = whatsappCheckoutURL(text)
-//     window.open(url, '_blank')
-//   }
-
-//   if (!items.length) return <div>Your cart is empty.</div>
-
-//   return (
-//     <div className="grid md:grid-cols-3 gap-6">
-//       <form onSubmit={onSubmit} className="md:col-span-2 space-y-3">
-//         <h1 className="text-2xl font-semibold mb-2">Checkout</h1>
-//         <div className="grid sm:grid-cols-2 gap-3">
-//           <input placeholder="Full name" value={name} onChange={e=>setName(e.target.value)} className="border rounded px-3 py-2" />
-//           <input placeholder="Phone (WhatsApp)" value={phone} onChange={e=>setPhone(e.target.value)} className="border rounded px-3 py-2" />
-//         </div>
-//         <input placeholder="Delivery address" value={address} onChange={e=>setAddress(e.target.value)} className="border rounded px-3 py-2 w-full" />
-//         <textarea placeholder="Order note (optional)" value={note} onChange={e=>setNote(e.target.value)} className="border rounded px-3 py-2 w-full min-h-[100px]" />
-
-//         <BankPanel />
-
-//         <button disabled={disabled} className={`px-4 py-2 rounded text-white ${disabled ? 'bg-gray-400' : 'bg-green-600'}`}>
-//           Pay via Transfer & WhatsApp
-//         </button>
-//         <p className="text-xs text-gray-600">This opens WhatsApp with your order details so our team can confirm delivery.</p>
-//       </form>
-
-//       <aside className="border rounded-xl p-4 h-fit">
-//         <h2 className="font-semibold mb-2">Order summary</h2>
-//         <div className="space-y-2 max-h-[50vh] overflow-auto pr-2">
-//           {items.map(i => (
-//             <div key={i.id} className="flex justify-between text-sm">
-//               <div>{i.qty} × {i.name}</div>
-//               <div>₦{(i.price * i.qty).toLocaleString('en-NG')}</div>
-//             </div>
-//           ))}
-//         </div>
-//         <div className="mt-3 flex justify-between font-semibold">
-//           <span>Total</span>
-//           <span>₦{items.reduce((s,i)=>s+i.qty*i.price,0).toLocaleString('en-NG')}</span>
-//         </div>
-//       </aside>
-//     </div>
-//   )
-// }
-
-import  { useState, useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { useCatalog } from '../store/catalog'
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useCart } from '../store/cart'; // Assuming cart store for cart state
 
 const Checkout = () => {
-  const location = useLocation();
-  const navigate = useNavigate();  // Use navigate instead of history
-
-  const productId = new URLSearchParams(location.search).get('productId');  // Get the product ID from the URL
-  const products = useCatalog(s => s.products);  // Get products from your store
-
-  const product = products.find(p => p.id === productId);  // Find the selected product
+  const navigate = useNavigate();
+  const { items } = useCart(); // Get cart items from the store
 
   const [shippingInfo, setShippingInfo] = useState({
     name: '',
@@ -78,62 +12,148 @@ const Checkout = () => {
     email: '',
   });
 
-  if (!product) {
-    return <div>Product not found for checkout!</div>;
+  const [paymentMethod, setPaymentMethod] = useState('bankTransfer'); // Default is bank transfer
+
+  if (items.length === 0) {
+    return <div>Your cart is empty. Please add items before checking out.</div>;
   }
 
   const handlePlaceOrder = () => {
     // Handle order placement (you can integrate payment gateway here)
     alert('Order placed successfully!');
-    // Redirect to a confirmation page or homepage
-    navigate('/');
+    navigate('/order-confirmation');
+  };
+
+  const handleShippingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setShippingInfo((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
-    <div className="checkout-page">
-      <h2>Checkout</h2>
-      <div className="order-summary">
-        <h3>Order Summary</h3>
-        <div>
-          <h4>{product.name}</h4>
-          <p>{product.description}</p>
-          <p>Price: ₦{product.price}</p>
+    <div className="checkout-container bg-gray-50 p-6 rounded-lg shadow-lg max-w-3xl mx-auto">
+      <h2 className="text-3xl font-semibold text-center text-green-600 mb-8">Checkout</h2>
+
+      {/* Order Summary */}
+      <div className="order-summary bg-white p-6 rounded-lg shadow-sm mb-6">
+        <h3 className="text-2xl font-semibold mb-4">Order Summary</h3>
+        {items.map((item) => (
+          <div key={item.id} className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <img src={item.images[0]} alt={item.name} className="w-16 h-16 object-cover rounded" />
+              <div>
+                <p className="font-medium">{item.name}</p>
+                <p className="text-sm text-gray-600">₦{item.price}</p>
+                <p className="text-sm text-gray-600">Qty: {item.qty}</p>
+              </div>
+            </div>
+            <p className="font-semibold text-lg">₦{item.price * item.qty}</p>
+          </div>
+        ))}
+        <div className="flex justify-between font-semibold text-lg mt-4 border-t pt-4">
+          <span>Total</span>
+          <span>₦{items.reduce((total, item) => total + item.price * item.qty, 0)}</span>
         </div>
       </div>
 
-      <div className="shipping-info">
-        <h3>Shipping Information</h3>
+      {/* Shipping Information */}
+      <div className="shipping-info bg-white p-6 rounded-lg shadow-sm mb-6">
+        <h3 className="text-xl font-semibold mb-4">Shipping Information</h3>
         <input
           type="text"
+          name="name"
           placeholder="Full Name"
           value={shippingInfo.name}
-          onChange={(e) => setShippingInfo({ ...shippingInfo, name: e.target.value })}
+          onChange={handleShippingChange}
+          className="w-full p-4 mb-4 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600"
         />
         <input
           type="text"
-          placeholder="Address"
+          name="address"
+          placeholder="Street Address"
           value={shippingInfo.address}
-          onChange={(e) => setShippingInfo({ ...shippingInfo, address: e.target.value })}
+          onChange={handleShippingChange}
+          className="w-full p-4 mb-4 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600"
         />
         <input
           type="email"
-          placeholder="Email"
+          name="email"
+          placeholder="Email Address"
           value={shippingInfo.email}
-          onChange={(e) => setShippingInfo({ ...shippingInfo, email: e.target.value })}
+          onChange={handleShippingChange}
+          className="w-full p-4 mb-4 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600"
         />
       </div>
 
-      {/* Payment information can be added here */}
-      <div className="payment-info">
-        <h3>Payment Information</h3>
-        {/* Add your payment gateway integration here */}
+      {/* Payment Method */}
+      <div className="payment-info bg-white p-6 rounded-lg shadow-sm mb-6">
+        <h3 className="text-xl font-semibold mb-4">Payment Information</h3>
+        <div className="payment-method mb-4">
+          <label className="block mb-2 font-medium text-lg">
+            <input
+              type="radio"
+              name="paymentMethod"
+              value="bankTransfer"
+              checked={paymentMethod === 'bankTransfer'}
+              onChange={() => setPaymentMethod('bankTransfer')}
+              className="mr-2"
+            />
+            Bank Transfer
+          </label>
+          <label className="block mb-2 font-medium text-lg">
+            <input
+              type="radio"
+              name="paymentMethod"
+              value="whatsapp"
+              checked={paymentMethod === 'whatsapp'}
+              onChange={() => setPaymentMethod('whatsapp')}
+              className="mr-2"
+            />
+            Pay via WhatsApp
+          </label>
+        </div>
+
+        {/* Bank Transfer Info */}
+        {paymentMethod === 'bankTransfer' && (
+          <div className="bank-transfer">
+            <h4 className="font-semibold text-lg mb-2">Bank Details</h4>
+            <p>Bank Name: Example Bank</p>
+            <p>Account Name: Example Account</p>
+            <p>Account Number: 1234567890</p>
+            <p>Branch: Main Branch</p>
+            <p className="text-sm text-gray-600">Please use your order ID as a reference when making a payment.</p>
+          </div>
+        )}
+
+        {/* WhatsApp Payment Link */}
+        {paymentMethod === 'whatsapp' && (
+          <div className="whatsapp-payment mt-4">
+            <h4 className="font-semibold text-lg mb-2">Payment via WhatsApp</h4>
+            <p>Click the link below to proceed with payment via WhatsApp:</p>
+            <a
+              href="https://wa.me/1234567890?text=I%20want%20to%20pay%20for%20my%20order"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block mt-4 text-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            >
+              Proceed with Payment on WhatsApp
+            </a>
+          </div>
+        )}
       </div>
 
-      <button onClick={handlePlaceOrder} className="place-order-button">
-        Place Order
-      </button>
+      {/* Place Order Button */}
+      <div className="text-center">
+        <button
+          onClick={handlePlaceOrder}
+          className="w-full py-4 text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none"
+        >
+          Place Order
+        </button>
+      </div>
     </div>
   );
 };
 
 export default Checkout;
+
+
