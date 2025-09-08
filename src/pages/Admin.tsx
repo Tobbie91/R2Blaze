@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useCatalog, type Product } from '../store/catalog'
 import ImageUploader from '../components/ImageUploader'
@@ -73,6 +73,25 @@ export default function Admin() {
   const [justAdded, setJustAdded] = useState(false)
 
   const canUpload = Boolean(CLOUDINARY.cloudName && CLOUDINARY.uploadPreset)
+// Load saved catalog from LocalStorage into the store on first mount
+useEffect(() => {
+  try {
+    const raw = localStorage.getItem('r2blaze_catalog')
+    if (!raw) return
+    const saved = JSON.parse(raw)
+    if (!Array.isArray(saved) || !saved.length) return
+
+    // Avoid duplicates if something already exists in memory
+    const existing = new Set(products?.map(p => p.id))
+    saved.forEach((p: Product) => {
+      if (!existing.has(p.id)) add(p)
+    })
+  } catch {
+    // ignore parse errors
+  }
+  // run once on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [])
 
   function addImageUrl(e?: React.FormEvent) {
     if (e) e.preventDefault()
