@@ -37,7 +37,7 @@ export default function Hero({ slides = DEFAULT_SLIDES }: { slides?: Slide[] }) 
   const s = slides[idx]
 
   return (
-    <div className="relative h-[460px] rounded-2xl overflow-hidden">
+    <div className="relative h-[560px] overflow-hidden">
       {/* Video background */}
       {s.videoUrl && (
         <video

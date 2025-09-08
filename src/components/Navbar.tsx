@@ -15,9 +15,9 @@ export default function Navbar() {
           <img
             src="/images/donlogo.webp"  
             alt="Logo"
-            className="h-8"  
+            className="h-[10vh]"  
           />
-          <span className="font-bold text-lg">{STORE.name}</span>
+          {/* <span className="font-bold text-lg">{STORE.name}</span> */}
         </Link>
 
         <div className="flex items-center gap-2">
