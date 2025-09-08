@@ -329,24 +329,34 @@ export default function Admin() {
           Reset catalog (this device)
         </button>
         <button
+  type="button"                             // 👈 important
   onClick={() => {
-    const products = [{
-      id: `p-${Date.now()}`,
-      name: 'TAG Heuer Aquaracer',
-      slug: `tag-heuer-aquaracer-${Math.floor(Math.random()*1000)}`,
-      brand: 'TAG Heuer',
-      strap: 'metal',
-      price: 350000,
-      images: ['https://res.cloudinary.com/dpuencehw/image/upload/v1756942556/r2blaze/tvtzn6kewsfhpz4vpd3u.jpg'],
-      description: 'Seeded via button.',
-    }];
-    localStorage.setItem('r2blaze_catalog', JSON.stringify(products));
-    location.reload();
+    try {
+      const products = [{
+        id: `p-${Date.now()}`,
+        name: 'TAG Heuer Aquaracer',
+        slug: `tag-heuer-aquaracer-${Math.floor(Math.random()*1000)}`,
+        brand: 'TAG Heuer',
+        strap: 'metal',
+        price: 350000,
+        images: ['https://res.cloudinary.com/dpuencehw/image/upload/v1756942556/r2blaze/tvtzn6kewsfhpz4vpd3u.jpg'],
+        description: 'Seeded via button.',
+      }];
+
+      localStorage.setItem('r2blaze_catalog', JSON.stringify(products));
+      console.log('Seeded:', products);
+      alert('Seeded 1 product — reloading…');
+      setTimeout(() => location.reload(), 50);  // tiny delay so storage commits
+    } catch (e) {
+      console.error('Seeding failed:', e);
+      alert('Seeding failed — see Console');
+    }
   }}
   className="px-3 py-2 border rounded"
 >
   Seed 1 test product
 </button>
+
 
       </div>
     </div>
