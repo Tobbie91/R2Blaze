@@ -1,23 +1,21 @@
-// src/pages/Policies.tsx
-
 import React from 'react';
 
 const Policies = () => {
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
       {/* Hero Section */}
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-gray-900">Our Policies</h1>
-        <p className="mt-4 text-lg text-gray-600">
+      <div className="text-center bg-emerald-600 text-white py-10 rounded-lg shadow-lg">
+        <h1 className="text-4xl font-bold">Our Policies</h1>
+        <p className="mt-4 text-lg">
           Please take a moment to review our policies to understand how we operate.
         </p>
       </div>
 
       {/* Privacy Policy Section */}
       <section className="mt-12 bg-white p-8 rounded-xl shadow-lg">
-        <h2 className="text-2xl font-semibold text-gray-900">Privacy Policy</h2>
+        <h2 className="text-2xl font-semibold text-emerald-600">Privacy Policy</h2>
         <p className="mt-4 text-lg text-gray-700">
-          At [Your Company Name], we prioritize the protection of your personal data. Below is how we collect, use, and protect your information.
+          At R2blaze, we prioritize the protection of your personal data. Below is how we collect, use, and protect your information.
         </p>
         <ul className="list-disc list-inside mt-4 space-y-2">
           <li><strong>Data Collection</strong>: We collect personal details such as your name, email, and payment information when you make a purchase or sign up on our site.</li>
@@ -29,21 +27,21 @@ const Policies = () => {
 
       {/* Terms and Conditions Section */}
       <section className="mt-12 bg-white p-8 rounded-xl shadow-lg">
-        <h2 className="text-2xl font-semibold text-gray-900">Terms and Conditions</h2>
+        <h2 className="text-2xl font-semibold text-emerald-600">Terms and Conditions</h2>
         <p className="mt-4 text-lg text-gray-700">
           By using our website, you agree to abide by the following terms. Please read them carefully.
         </p>
         <ul className="list-disc list-inside mt-4 space-y-2">
           <li><strong>Product Availability</strong>: All products are subject to availability. Prices may change without notice.</li>
           <li><strong>Order Cancellation</strong>: We reserve the right to cancel any order if there are issues with payment or product availability.</li>
-          <li><strong>Intellectual Property</strong>: All content on this website is owned by [Your Company Name]. Unauthorized use is prohibited.</li>
+          <li><strong>Intellectual Property</strong>: All content on this website is owned by R2blaze. Unauthorized use is prohibited.</li>
           <li><strong>Limitation of Liability</strong>: We are not responsible for any indirect damages caused by using our services.</li>
         </ul>
       </section>
 
       {/* Return Policy Section */}
       <section className="mt-12 bg-white p-8 rounded-xl shadow-lg">
-        <h2 className="text-2xl font-semibold text-gray-900">Return Policy</h2>
+        <h2 className="text-2xl font-semibold text-emerald-600">Return Policy</h2>
         <p className="mt-4 text-lg text-gray-700">
           If you're not satisfied with your purchase, you can return it under the following conditions:
         </p>
@@ -57,7 +55,7 @@ const Policies = () => {
 
       {/* Shipping Policy Section */}
       <section className="mt-12 bg-white p-8 rounded-xl shadow-lg">
-        <h2 className="text-2xl font-semibold text-gray-900">Shipping Policy</h2>
+        <h2 className="text-2xl font-semibold text-emerald-600">Shipping Policy</h2>
         <p className="mt-4 text-lg text-gray-700">
           We offer fast and reliable shipping to get your products to you quickly. Below is an overview of our shipping terms:
         </p>
@@ -71,7 +69,7 @@ const Policies = () => {
 
       {/* Contact Section (WhatsApp) */}
       <section className="mt-12 text-center">
-        <h2 className="text-2xl font-semibold text-gray-900">Need More Information?</h2>
+        <h2 className="text-2xl font-semibold text-emerald-600">Need More Information?</h2>
         <p className="mt-4 text-lg text-gray-700 max-w-3xl mx-auto">
           If you have any questions about our policies or need further clarification, feel free to reach out to us via WhatsApp.
         </p>
@@ -79,7 +77,7 @@ const Policies = () => {
           href="https://wa.me/2348012345678" 
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-6 inline-block px-6 py-3 rounded bg-green-600 text-white text-lg"
+          className="mt-6 inline-block px-6 py-3 rounded bg-green-600 text-white text-lg hover:bg-green-700 transition-all duration-200"
         >
           Contact Us on WhatsApp
         </a>
@@ -89,4 +87,5 @@ const Policies = () => {
 };
 
 export default Policies;
+
 

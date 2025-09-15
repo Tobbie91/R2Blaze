@@ -1,29 +1,70 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useCart } from '../store/cart'; // Assuming cart store for cart state
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useCart } from "../store/cart"; // Assume this hook handles cart data
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { items } = useCart(); // Get cart items from the store
+  const { items } = useCart(); // Getting cart items from the store
 
   const [shippingInfo, setShippingInfo] = useState({
-    name: '',
-    address: '',
-    email: '',
+    name: "",
+    address: "",
+    email: "",
   });
 
-  const [paymentMethod, setPaymentMethod] = useState('bankTransfer'); // Default is bank transfer
+  const [paymentMethod, setPaymentMethod] = useState("whatsapp"); // Default to WhatsApp payment method
 
   if (items.length === 0) {
     return <div>Your cart is empty. Please add items before checking out.</div>;
   }
+  const handlePlaceOrder = async () => {
+    // Collect order data
+    const orderData = {
+      items: items,           // Cart items
+      shippingInfo: shippingInfo, // Customer's shipping info
+      paymentMethod: paymentMethod, // Payment method
+    };
 
-  const handlePlaceOrder = () => {
-    // Handle order placement (you can integrate payment gateway here)
-    alert('Order placed successfully!');
-    navigate('/order-confirmation');
-  };
+    // Generate the WhatsApp message with customer and order details
+    const orderDetails = items
+      .map(
+        (item) => {
+          // Dynamically calculate the total price for each item
+          const totalPrice = item.price * item.qty; 
+          console.log(`Item: ${item.name}, Qty: ${item.qty}, Price: ₦${totalPrice}`);
+          return `Product: ${item.name}, Qty: ${item.qty}, Price: ₦${totalPrice}`;
+        }
+      )
+      .join("\n");
 
+    const message = `
+      *Customer Details:*
+      Name: ${shippingInfo.name}
+      Address: ${shippingInfo.address}
+      Email: ${shippingInfo.email}
+      
+      *Order Details:*
+      ${orderDetails}
+
+      Payment Method: ${paymentMethod}
+    `;
+
+    console.log("WhatsApp Message:", message); // Log the generated WhatsApp message to verify
+
+    const encodedMessage = encodeURIComponent(message); // Encode the message for the URL
+
+    // WhatsApp link with the pre-filled message
+    const whatsappLink = `https://wa.me/2347018239270?text=${encodedMessage}`;
+
+    // Redirect the user to WhatsApp to complete payment
+    window.open(whatsappLink, "_blank");
+
+    // Optionally, navigate to the confirmation page after placing the order
+    navigate("/order-confirmation", { state: { order: orderData } });
+};
+
+
+  // Handle changes in shipping input fields
   const handleShippingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setShippingInfo((prev) => ({ ...prev, [name]: value }));
@@ -39,7 +80,11 @@ const Checkout = () => {
         {items.map((item) => (
           <div key={item.id} className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
-              <img src={item.images[0]} alt={item.name} className="w-16 h-16 object-cover rounded" />
+              <img
+                src={item.images[0]}
+                alt={item.name}
+                className="w-16 h-16 object-cover rounded"
+              />
               <div>
                 <p className="font-medium">{item.name}</p>
                 <p className="text-sm text-gray-600">₦{item.price}</p>
@@ -51,7 +96,9 @@ const Checkout = () => {
         ))}
         <div className="flex justify-between font-semibold text-lg mt-4 border-t pt-4">
           <span>Total</span>
-          <span>₦{items.reduce((total, item) => total + item.price * item.qty, 0)}</span>
+          <span>
+            ₦{items.reduce((total, item) => total + item.price * item.qty, 0)}
+          </span>
         </div>
       </div>
 
@@ -92,62 +139,45 @@ const Checkout = () => {
             <input
               type="radio"
               name="paymentMethod"
-              value="bankTransfer"
-              checked={paymentMethod === 'bankTransfer'}
-              onChange={() => setPaymentMethod('bankTransfer')}
+              value="whatsapp"
+              checked={paymentMethod === "whatsapp"}
+              onChange={() => setPaymentMethod("whatsapp")}
               className="mr-2"
             />
-            Bank Transfer
+            Pay via WhatsApp
           </label>
           <label className="block mb-2 font-medium text-lg">
             <input
               type="radio"
               name="paymentMethod"
-              value="whatsapp"
-              checked={paymentMethod === 'whatsapp'}
-              onChange={() => setPaymentMethod('whatsapp')}
+              value="bankTransfer"
+              checked={paymentMethod === "bankTransfer"}
+              onChange={() => setPaymentMethod("bankTransfer")}
               className="mr-2"
             />
-            Pay via WhatsApp
+            Bank Transfer
           </label>
         </div>
 
         {/* Bank Transfer Info */}
-        {paymentMethod === 'bankTransfer' && (
+        {paymentMethod === "bankTransfer" && (
           <div className="bank-transfer">
             <h4 className="font-semibold text-lg mb-2">Bank Details</h4>
-            <p>Bank Name: Example Bank</p>
-            <p>Account Name: Example Account</p>
-            <p>Account Number: 1234567890</p>
-            <p>Branch: Main Branch</p>
-            <p className="text-sm text-gray-600">Please use your order ID as a reference when making a payment.</p>
-          </div>
-        )}
-
-        {/* WhatsApp Payment Link */}
-        {paymentMethod === 'whatsapp' && (
-          <div className="whatsapp-payment mt-4">
-            <h4 className="font-semibold text-lg mb-2">Payment via WhatsApp</h4>
-            <p>Click the link below to proceed with payment via WhatsApp:</p>
-            <a
-              href="https://wa.me/1234567890?text=I%20want%20to%20pay%20for%20my%20order"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block mt-4 text-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
-            >
-              Proceed with Payment on WhatsApp
-            </a>
+            <p>Bank Name: Stanbic Bank</p>
+            <p>Account Name: Odeode Emmanuel Gbenga</p>
+            <p>Account Number: 0034591441</p>
+           
           </div>
         )}
       </div>
 
-      {/* Place Order Button */}
+      {/* Single Button to Place Order & Send to WhatsApp */}
       <div className="text-center">
         <button
           onClick={handlePlaceOrder}
           className="w-full py-4 text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none"
         >
-          Place Order
+          Proceed with Payment on WhatsApp
         </button>
       </div>
     </div>
@@ -155,5 +185,4 @@ const Checkout = () => {
 };
 
 export default Checkout;
-
 

@@ -1,10 +1,23 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
-import { useCatalog } from '../store/catalog'
+import { supabase } from '../components/supabase'
 import ProductCard from '../components/ProductCard'
 
+type ProductRow = {
+  id: string
+  slug: string
+  name: string
+  brand: string
+  strap: 'metal'|'leather'|'rubber'|'silicon'|'fabric'
+  price: number
+  prev_price?: number | null
+  images: string[] | null
+  description?: string | null
+}
+
 export default function Products() {
-  const products = useCatalog(s => s.products)
+  const [products, setProducts] = useState<ProductRow[]>([])
+  const [loading, setLoading] = useState(true)
   const [params, setParams] = useSearchParams()
 
   const [q, setQ] = useState(() => params.get('q') ?? '')
@@ -13,17 +26,45 @@ export default function Products() {
 
   useEffect(() => { setVisible(12) }, [q, brandParam])
 
+  useEffect(() => {
+    (async () => {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, slug, name, brand, strap, price, prev_price, images, description')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('Supabase fetch error:', error)
+        setProducts([])
+      } else {
+        // normalize: make sure images is always an array
+        const normalized = (data ?? []).map(p => ({
+          ...p,
+          images: Array.isArray(p.images) ? p.images : [],
+        })) as ProductRow[]
+        setProducts(normalized)
+      }
+      setLoading(false)
+    })()
+  }, [])
+
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase()
     return products.filter(p => {
-      const byBrand = brandParam ? p.brand.toLowerCase() === brandParam.toLowerCase() : true
-      const byText = !term || p.name.toLowerCase().includes(term) || p.brand.toLowerCase().includes(term)
+      const byBrand = brandParam ? p.brand?.toLowerCase() === brandParam.toLowerCase() : true
+      const byText = !term || p.name?.toLowerCase().includes(term) || p.brand?.toLowerCase().includes(term)
       return byBrand && byText
     })
   }, [products, q, brandParam])
 
   const show = filtered.slice(0, visible)
-  const brands = useMemo(() => Array.from(new Set(products.map(p => p.brand))).sort(), [products])
+  const brands = useMemo(
+    () => Array.from(new Set(products.map(p => p.brand).filter(Boolean))).sort(),
+    [products]
+  )
+
+  if (loading) return <div>Loading…</div>
 
   return (
     <div className="space-y-4">
@@ -67,7 +108,16 @@ export default function Products() {
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {show.map(p => <ProductCard key={p.id} p={p} />)}
+        {show.map(p => (
+          <ProductCard
+            key={p.id}
+            p={{
+              ...p,
+              // if your ProductCard expects prevPrice (camelCase)
+              prevPrice: p.prev_price ?? undefined,
+            } as any}
+          />
+        ))}
       </div>
 
       {!filtered.length && (

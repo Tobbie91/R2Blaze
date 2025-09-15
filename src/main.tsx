@@ -10,7 +10,9 @@ import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
 import About from './pages/About'
 import Policies from './pages/Policies'
-import Admin from './pages/Admin'
+import AdminLogin from './pages/AdminLogin'
+import AdminPage from './pages/AdminPage'
+import OrderConfirmation from './pages/order'
 
 const router = createBrowserRouter([
   {
@@ -19,12 +21,16 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Home /> },
       { path: 'products', element: <Products /> },
-      { path: 'products/:slug', element: <Product /> },
+      // { path: 'products/:id/:slug', element: <Product /> },  
+      { path: 'products/:id', element: <Product /> }, 
       { path: 'cart', element: <Cart /> },
       { path: 'checkout', element: <Checkout /> },
       { path: 'about', element: <About /> },
       { path: 'policies', element: <Policies /> },
-      { path: 'admin', element: <Admin /> },
+      { path: 'admin', element: <AdminPage /> },
+      {path:"login", element: <AdminLogin />} ,
+      {path:"order-confirmation", element: <OrderConfirmation />} ,
+    //  {path: "admins", element:<AdminPage />} 
     ],
   },
 ])
