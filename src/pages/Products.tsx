@@ -7,7 +7,7 @@ type ProductRow = {
   id: string
   slug: string
   name: string
-  brand: string
+  brand: string | null
   strap: 'metal'|'leather'|'rubber'|'silicon'|'fabric'
   price: number
   prev_price?: number | null
@@ -27,7 +27,7 @@ export default function Products() {
   useEffect(() => { setVisible(12) }, [q, brandParam])
 
   useEffect(() => {
-    (async () => {
+    ;(async () => {
       setLoading(true)
       const { data, error } = await supabase
         .from('products')
@@ -38,7 +38,6 @@ export default function Products() {
         console.error('Supabase fetch error:', error)
         setProducts([])
       } else {
-        // normalize: make sure images is always an array
         const normalized = (data ?? []).map(p => ({
           ...p,
           images: Array.isArray(p.images) ? p.images : [],
@@ -49,25 +48,58 @@ export default function Products() {
     })()
   }, [])
 
+  // --- helpers ---
+  const normalizeBrand = (b: unknown) =>
+    String(b ?? '')
+      .normalize('NFKC')     // fix sneaky Unicode lookalikes
+      .trim()
+      .replace(/\s+/g, ' ')  // collapse inner spaces
+      .toLowerCase()
+
+  const normalizedBrandParam = useMemo(
+    () => normalizeBrand(brandParam),
+    [brandParam]
+  )
+
+  // Filter (brand compare is normalized)
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase()
     return products.filter(p => {
-      const byBrand = brandParam ? p.brand?.toLowerCase() === brandParam.toLowerCase() : true
-      const byText = !term || p.name?.toLowerCase().includes(term) || p.brand?.toLowerCase().includes(term)
+      const byBrand = normalizedBrandParam
+        ? normalizeBrand(p.brand) === normalizedBrandParam
+        : true
+      const byText =
+        !term ||
+        p.name?.toLowerCase().includes(term) ||
+        (p.brand ?? '').toLowerCase().includes(term)
       return byBrand && byText
     })
-  }, [products, q, brandParam])
+  }, [products, q, normalizedBrandParam])
 
   const show = filtered.slice(0, visible)
-  const brands = useMemo(
-    () => Array.from(new Set(products.map(p => p.brand).filter(Boolean))).sort(),
-    [products]
-  )
+
+  // Build a unique list of brands with a pretty display label
+  const brands = useMemo(() => {
+    const map = new Map<string, string>() // norm -> display
+    for (const p of products) {
+      const raw = typeof p.brand === 'string' ? p.brand : ''
+      const norm = normalizeBrand(raw)
+      if (!norm) continue
+      if (!map.has(norm)) {
+        const display = raw.trim().replace(/\s+/g, ' ')
+        map.set(norm, display)
+      }
+    }
+    return Array.from(map.entries())
+      .sort((a, b) => a[1].localeCompare(b[1], undefined, { sensitivity: 'base' }))
+      .map(([norm, display]) => ({ norm, display }))
+  }, [products])
 
   if (loading) return <div>Loading…</div>
 
   return (
     <div className="space-y-4">
+      {/* header + search */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h1 className="text-2xl font-semibold">All Products</h1>
         <input
@@ -83,39 +115,40 @@ export default function Products() {
         />
       </div>
 
-      <div className="grid gap-2 grid-cols-2 sm:grid-cols-4 lg:grid-cols-8">
+      {/* compact brand chips */}
+      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
         <Link
-          to="/products"
-          className={`inline-flex items-center justify-center rounded-md border px-3 py-2 text-sm ${
-            !brandParam ? 'bg-emerald-700 text-white border-emerald-700' : 'hover:border-black'
-          }`}
+          to={`/products${q ? `?q=${encodeURIComponent(q)}` : ''}`}
+          className={`inline-flex items-center justify-center rounded-full border px-3 py-1.5 text-xs sm:text-[13px]
+            ${!normalizedBrandParam ? 'bg-emerald-700 text-white border-emerald-700' : 'hover:border-black text-gray-700'}
+          `}
         >
           All brands
         </Link>
+
         {brands.map(b => (
           <Link
-            key={b}
-            to={`/products?brand=${encodeURIComponent(b)}${q ? `&q=${encodeURIComponent(q)}` : ''}`}
-            className={`inline-flex items-center justify-center rounded-md border px-3 py-2 text-sm ${
-              brandParam.toLowerCase() === b.toLowerCase()
+            key={b.norm}
+            to={`/products?brand=${encodeURIComponent(b.display)}${q ? `&q=${encodeURIComponent(q)}` : ''}`}
+            className={`inline-flex items-center justify-center rounded-full border px-3 py-1.5 text-xs sm:text-[13px]
+              ${normalizedBrandParam === b.norm
                 ? 'bg-emerald-700 text-white border-emerald-700'
-                : 'hover:border-black'
-            }`}
+                : 'hover:border-black text-gray-700'}
+            `}
+            aria-label={`Filter by ${b.display}`}
+            title={b.display}
           >
-            {b}
+            {b.display}
           </Link>
         ))}
       </div>
 
+      {/* products */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {show.map(p => (
           <ProductCard
             key={p.id}
-            p={{
-              ...p,
-              // if your ProductCard expects prevPrice (camelCase)
-              prevPrice: p.prev_price ?? undefined,
-            } as any}
+            p={{ ...p, prevPrice: p.prev_price ?? undefined } as any}
           />
         ))}
       </div>
@@ -126,7 +159,10 @@ export default function Products() {
 
       {visible < filtered.length && (
         <div className="flex justify-center">
-          <button className="px-4 py-2 rounded-md border hover:bg-gray-50" onClick={() => setVisible(v => v + 12)}>
+          <button
+            className="px-4 py-2 rounded-md border hover:bg-gray-50"
+            onClick={() => setVisible(v => v + 12)}
+          >
             View more
           </button>
         </div>
@@ -134,3 +170,4 @@ export default function Products() {
     </div>
   )
 }
+

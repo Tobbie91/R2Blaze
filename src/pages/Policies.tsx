@@ -47,8 +47,8 @@ const Policies = () => {
         </p>
         <ul className="list-disc list-inside mt-4 space-y-2">
           <li><strong>Eligibility</strong>: The product must be unused and in its original packaging to be eligible for a return.</li>
-          <li><strong>Return Process</strong>: To initiate a return, contact us within [X] days of receiving your order.</li>
-          <li><strong>Refunds</strong>: Once we receive the returned item, we'll issue a refund to your original payment method within [X] business days.</li>
+          <li><strong>Return Process</strong>: To initiate a return, contact us within [5] days of receiving your order.</li>
+          <li><strong>Refunds</strong>: Once we receive the returned item, we'll issue a refund to your original payment method within [5] business days.</li>
           <li><strong>Exclusions</strong>: Certain items, such as personalized or clearance products, may not be eligible for return.</li>
         </ul>
       </section>
@@ -62,7 +62,7 @@ const Policies = () => {
         <ul className="list-disc list-inside mt-4 space-y-2">
           <li><strong>Shipping Methods</strong>: We provide standard, expedited, and express shipping options.</li>
           <li><strong>Shipping Costs</strong>: Shipping fees are calculated based on your location and the total weight of your order.</li>
-          <li><strong>Processing Time</strong>: Orders are processed within [X] business days. You'll receive a tracking number once your order ships.</li>
+          <li><strong>Processing Time</strong>: Orders are processed within [3] business days. You'll receive a tracking number once your order ships.</li>
           <li><strong>International Shipping</strong>: We offer international shipping with additional charges for customs duties and taxes.</li>
         </ul>
       </section>

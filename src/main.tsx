@@ -13,6 +13,9 @@ import Policies from './pages/Policies'
 import AdminLogin from './pages/AdminLogin'
 import AdminPage from './pages/AdminPage'
 import OrderConfirmation from './pages/order'
+import AdminProducts from './pages/AdminProducts'
+import RequireAdmin from './components/RequireAdmin'
+import { AuthProvider } from './components/AuthProvider'
 
 const router = createBrowserRouter([
   {
@@ -27,8 +30,9 @@ const router = createBrowserRouter([
       { path: 'checkout', element: <Checkout /> },
       { path: 'about', element: <About /> },
       { path: 'policies', element: <Policies /> },
-      { path: 'admin', element: <AdminPage /> },
       {path:"login", element: <AdminLogin />} ,
+      { path: 'admin', element: <RequireAdmin><AdminPage /></RequireAdmin> },
+      { path: 'admin/products', element: <RequireAdmin><AdminProducts /></RequireAdmin> },
       {path:"order-confirmation", element: <OrderConfirmation />} ,
     //  {path: "admins", element:<AdminPage />} 
     ],
@@ -37,6 +41,8 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   </React.StrictMode>
 )

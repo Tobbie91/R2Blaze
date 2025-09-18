@@ -11,7 +11,7 @@ const Footer = () => {
             {/* Logo */}
             <img 
               src="/images/donlogo.webp"  // Path to the logo image
-              alt="SupreWatch Logo"
+              alt="R2blaze Logo"
               className="w-32 h-auto"  // Adjust the size of the logo (32px width for example)
             />
             <div>

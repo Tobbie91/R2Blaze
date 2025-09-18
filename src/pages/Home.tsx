@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import ProductCard from '../components/ProductCard'
 import Hero from '../components/hero'
@@ -10,8 +10,8 @@ import FullBleed from '../components/FullBleed'
 import { supabase } from '../components/supabase'
 
 export default function Home() {
-  const [products, setProducts] = useState<any[]>([]);  // State to store products
-  const [loading, setLoading] = useState<boolean>(true);  // Loading state
+  const [products, setProducts] = useState<any[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
 
   useEffect(() => {
     (async () => {
@@ -20,42 +20,60 @@ export default function Home() {
       console.log('test products →', { data, error })
     })()
   }, [])
-  
+
   useEffect(() => {
-    // Fetch products from Supabase when the component mounts
     const fetchProducts = async () => {
-      const { data, error } = await supabase
-        .from('products')  // Reference the 'products' table in Supabase
-        .select('*');  // Fetch all columns
-
+      const { data, error } = await supabase.from('products').select('*')
       if (error) {
-        console.error('Error fetching products:', error);
+        console.error('Error fetching products:', error)
       } else {
-        setProducts(data);  // Set products to state
+        setProducts(data ?? [])
       }
-      setLoading(false);  // Set loading to false after data is fetched
-    };
+      setLoading(false)
+    }
+    fetchProducts()
+  }, [])
 
-    fetchProducts();  // Call the function to fetch products
-  }, []);
+  // --- hooks must be called every render (no early return above this line) ---
 
-  // Show loading state while fetching
+  const normalizeBrand = (b: unknown) =>
+    String(b ?? '')
+      .normalize('NFKC')
+      .trim()
+      .replace(/\s+/g, ' ')
+      .toLowerCase()
+
+  const brands = useMemo(() => {
+    const seen = new Set<string>()
+    const list: string[] = []
+    for (const p of products) {
+      const raw = typeof p.brand === 'string' ? p.brand : ''
+      const norm = normalizeBrand(raw)
+      if (!norm || seen.has(norm)) continue
+      seen.add(norm)
+      const display = raw.trim().replace(/\s+/g, ' ')
+      list.push(display)
+    }
+    return list.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })).slice(0, 50)
+  }, [products])
+
+  const featured = useMemo(() => products.slice(0, 8), [products])
+
+  // safe to early-return now (after hooks)
   if (loading) {
-    return <div>Loading...</div>;
+    return <div>Loading...</div>
   }
-
-  const featured = products.slice(0, 8);  // Select the first 8 products
-  const brands = Array.from(new Set(products.map((p: any) => p.brand))).slice(0, 50);  // Extract unique brands
 
   return (
     <div className="space-y-10">
-      <FullBleed>   
+      <FullBleed>
         <Hero />
       </FullBleed>
-   
+
       <Section title="Shop by brand">
-        <BrandStrip brands={brands} />
-      </Section>
+  <BrandStrip brands={brands} max={10} />
+</Section>
+
 
       <Section
         title="New arrivals"
@@ -71,16 +89,16 @@ export default function Home() {
           ))}
         </div> */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {products.map((p) => (
-          <ProductCard key={p.id} p={p} />  // Display each product card
-        ))}
-      </div>
+          {products.map((p) => (
+            <ProductCard key={p.id} p={p} />
+          ))}
+          {/* Display each product card */}
+        </div>
       </Section>
+
       <Highlights />
     </div>
   )
 }
-
-
 
 
