@@ -1,37 +1,40 @@
-// src/components/AuthProvider.tsx
+// components/AuthProvider.tsx
 import { createContext, useContext, useEffect, useState } from 'react'
+import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 
-type Profile = { id: string; email: string | null; role: 'admin'|'user' }
-type Ctx = { loading: boolean; session: any; profile: Profile | null }
-
-const AuthCtx = createContext<Ctx>({ loading: true, session: null, profile: null })
-export const useAuth = () => useContext(AuthCtx)
+type AuthCtx = { loading: boolean; session: Session | null; user: User | null }
+const Ctx = createContext<AuthCtx>({ loading: true, session: null, user: null })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
-  const [session, setSession] = useState<any>(null)
-  const [profile, setProfile] = useState<Profile|null>(null)
+  const [session, setSession] = useState<Session | null>(null)
+  const [user, setUser] = useState<User | null>(null)
 
   useEffect(() => {
-    (async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setSession(session)
-      if (session?.user?.id) await loadProfile(session.user.id)
+    let active = true
+    // 1) initial fetch
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return
+      setSession(data.session ?? null)
+      setUser(data.session?.user ?? null)
       setLoading(false)
-    })()
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_evt, sess) => {
-      setSession(sess)
-      if (sess?.user?.id) await loadProfile(sess.user.id)
-      else setProfile(null)
     })
-    return () => sub.subscription.unsubscribe()
+    // 2) subscribe to changes
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
+      if (!active) return
+      setSession(sess)
+      setUser(sess?.user ?? null)
+      setLoading(false)
+    })
+    return () => {
+      active = false
+      sub.subscription.unsubscribe()
+    }
   }, [])
 
-  async function loadProfile(userId: string) {
-    const { data } = await supabase.from('profiles').select('id,email,role').eq('id', userId).maybeSingle()
-    setProfile(data ?? null)
-  }
-
-  return <AuthCtx.Provider value={{ loading, session, profile }}>{children}</AuthCtx.Provider>
+  return <Ctx.Provider value={{ loading, session, user }}>{children}</Ctx.Provider>
 }
+
+export const useAuth = () => useContext(Ctx)
+

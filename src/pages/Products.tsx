@@ -51,9 +51,9 @@ export default function Products() {
   // --- helpers ---
   const normalizeBrand = (b: unknown) =>
     String(b ?? '')
-      .normalize('NFKC')     // fix sneaky Unicode lookalikes
+      .normalize('NFKC')  
       .trim()
-      .replace(/\s+/g, ' ')  // collapse inner spaces
+      .replace(/\s+/g, ' ')  
       .toLowerCase()
 
   const normalizedBrandParam = useMemo(

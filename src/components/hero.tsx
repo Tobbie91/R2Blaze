@@ -25,7 +25,7 @@ const DEFAULT_SLIDES: Slide[] = [
     text: 'Premium watches that fit your style and budget.',
     ctaText: 'Shop now',
     ctaHref: '/products',
-    imageUrl: 'https://res.cloudinary.com/dpuencehw/image/upload/v1757295380/r2blaze/jbim6lnxabc8hvlyelln.jpg',
+    imageUrl: 'https://res.cloudinary.com/dpuencehw/image/upload/v1759440848/esjt8zmhlmkdd2x14yq5.jpg',
     imageAlt: 'Elegant watch close-up on wrist'
   },
   {
@@ -33,7 +33,7 @@ const DEFAULT_SLIDES: Slide[] = [
     text: 'Fresh drops from trusted brands—be the first to own them.',
     ctaText: 'Shop now',
     ctaHref: '/products',
-    imageUrl: 'https://res.cloudinary.com/dpuencehw/image/upload/v1756940357/r2blaze/rftaw53thundrwtk3wuk.jpg',
+    imageUrl: 'https://res.cloudinary.com/dpuencehw/image/upload/v1759436368/lwyah1qmpwqo4ypsxibc.jpg',
     imageAlt: 'Display of latest watch models'
   },
   {
@@ -41,7 +41,7 @@ const DEFAULT_SLIDES: Slide[] = [
     text: 'Original brands, warranty-backed, and hassle-free returns.',
     ctaText: 'Shop now',
     ctaHref: '/products',
-    imageUrl: 'https://res.cloudinary.com/dpuencehw/image/upload/v1756940261/r2blaze/iu4av6xdcelyjjavdiod.jpg',
+    imageUrl: 'https://res.cloudinary.com/dpuencehw/image/upload/v1759441108/i9i1zsrtjbjaonbrkkt5.jpg',
     imageAlt: 'Watch details showing craftsmanship'
   },
 ]
