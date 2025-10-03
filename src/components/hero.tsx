@@ -33,7 +33,7 @@ const DEFAULT_SLIDES: Slide[] = [
     text: 'Fresh drops from trusted brands—be the first to own them.',
     ctaText: 'Shop now',
     ctaHref: '/products',
-    imageUrl: 'https://res.cloudinary.com/dpuencehw/image/upload/v1759436368/lwyah1qmpwqo4ypsxibc.jpg',
+    imageUrl: 'https://res.cloudinary.com/dpuencehw/image/upload/v1759445690/xvcehcldukakj7icp4sc.jpg',
     imageAlt: 'Display of latest watch models'
   },
   {
