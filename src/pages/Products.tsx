@@ -62,19 +62,40 @@ export default function Products() {
   )
 
   // Filter (brand compare is normalized)
+  // const filtered = useMemo(() => {
+  //   const term = q.trim().toLowerCase()
+  //   return products.filter(p => {
+  //     const byBrand = normalizedBrandParam
+  //       ? normalizeBrand(p.brand) === normalizedBrandParam
+  //       : true
+  //     const byText =
+  //       !term ||
+  //       p.name?.toLowerCase().includes(term) ||
+  //       (p.brand ?? '').toLowerCase().includes(term)
+  //     return byBrand && byText
+  //   })
+  // }, [products, q, normalizedBrandParam])
+
+  const deduped = useMemo(() => {
+    const map = new Map<string, ProductRow>();
+    for (const p of products) map.set(p.id, p);
+    return Array.from(map.values());
+  }, [products]);
+  
   const filtered = useMemo(() => {
-    const term = q.trim().toLowerCase()
-    return products.filter(p => {
+    const term = q.trim().toLowerCase();
+    return deduped.filter(p => {
       const byBrand = normalizedBrandParam
         ? normalizeBrand(p.brand) === normalizedBrandParam
-        : true
+        : true;
       const byText =
         !term ||
         p.name?.toLowerCase().includes(term) ||
-        (p.brand ?? '').toLowerCase().includes(term)
-      return byBrand && byText
-    })
-  }, [products, q, normalizedBrandParam])
+        (p.brand ?? '').toLowerCase().includes(term);
+      return byBrand && byText;
+    });
+  }, [deduped, q, normalizedBrandParam]);
+  
 
   const show = filtered.slice(0, visible)
 
