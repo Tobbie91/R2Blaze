@@ -1,2 +1,17 @@
+# Ignore any .env file anywhere
+**/.env
+
+# Ignore any .env.* variant anywhere (.env.local, .env.production, etc.)
+**/.env.*
+
+# Ignore Supabase-specific env files
+supabase/.env
 supabase/.env.functions
-.env
+
+# Keep example files tracked
+!**/.env.example
+**/.env
+**/.env.*
+supabase/.env
+supabase/.env.functions
+!**/.env.example
