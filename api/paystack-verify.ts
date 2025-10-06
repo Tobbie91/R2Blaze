@@ -1,6 +1,9 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { applyCORS, handlePreflight } from "./_cors";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+    if (handlePreflight(req, res)) return;
+    applyCORS(req, res);
   if (req.method !== "GET") return res.status(405).send("Method Not Allowed");
   const reference = String(req.query.reference || "");
   if (!reference) return res.status(400).json({ error: "reference is required" });

@@ -1,8 +1,11 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { applyCORS, handlePreflight } from "./_cors";
 
 const BASE = "https://api.paystack.co";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+    if (handlePreflight(req, res)) return;
+    applyCORS(req, res);
   if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
   try {
     const { email, amountNaira, reference, items, metadata } = req.body || {};
