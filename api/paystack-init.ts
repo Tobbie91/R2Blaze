@@ -1,24 +1,31 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { applyCORS, handlePreflight } from "./_cors";
 
 const BASE = "https://api.paystack.co";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    if (handlePreflight(req, res)) return;
-    applyCORS(req, res);
-  if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+  // ---- TEMP: ultra-permissive CORS for preview/local dev ----
+  res.setHeader("Access-Control-Allow-Origin", "*");               // ok for API JSON (no cookies)
+  res.setHeader("Vary", "Origin");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Max-Age", "86400");
+  if (req.method === "OPTIONS") { res.status(200).end(); return; } // respond to preflight immediately
+  // ------------------------------------------------------------
+
+  if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
+
   try {
-    const { email, amountNaira, reference, items, metadata } = req.body || {};
+    const { email, amountNaira, reference, items, metadata } = (req.body || {}) as any;
     if (!email || !amountNaira || !reference) {
-      return res.status(400).json({ error: "email, amountNaira, reference required" });
-    }
-    const amount_kobo = Math.round(Number(amountNaira) * 100);
-    if (!Number.isFinite(amount_kobo) || amount_kobo < 100) {
-      return res.status(400).json({ error: "Invalid amount" });
+      res.status(400).json({ error: "email, amountNaira, reference required" });
+      return;
     }
 
-    // (Optional) write pending order to Supabase here if you already wired the client.
-    // If you saw "no export found", comment out DB writes temporarily to isolate.
+    const amount_kobo = Math.round(Number(amountNaira) * 100);
+    if (!Number.isFinite(amount_kobo) || amount_kobo < 100) {
+      res.status(400).json({ error: "Invalid amount" });
+      return;
+    }
 
     const r = await fetch(`${BASE}/transaction/initialize`, {
       method: "POST",
@@ -37,7 +44,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     const data = await r.json();
-    if (!r.ok) return res.status(r.status).json({ error: data?.message || "Init failed" });
+    if (!r.ok) {
+      res.status(r.status).json({ error: data?.message || "Init failed" });
+      return;
+    }
 
     res.status(200).json({
       authorization_url: data.data.authorization_url,
