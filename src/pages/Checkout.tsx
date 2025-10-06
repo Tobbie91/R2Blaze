@@ -1,10 +1,28 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCart } from "../store/cart"; // Assume this hook handles cart data
+import { useCart } from "../store/cart";
 
-const Checkout = () => {
+// Optional: if you have a UUID lib, use it. Otherwise a tiny ref helper:
+function makeRef(prefix = "r2b"): string {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+type CartItem = {
+  id: string;
+  name: string;
+  price: number; // in Naira
+  qty: number;
+  images: string[];
+  // optional: slug, color, size, etc...
+};
+
+const API_BASE =
+  import.meta.env.VITE_R2BLAZE_API_BASE ||
+  "https://r2blaze-kywfiom78-oluwatobi-s-projects.vercel.app"; // fallback to your preview (test mode)
+
+export default function Checkout() {
   const navigate = useNavigate();
-  const { items } = useCart(); // Getting cart items from the store
+  const { items } = useCart() as { items: CartItem[] };
 
   const [shippingInfo, setShippingInfo] = useState({
     name: "",
@@ -12,63 +30,117 @@ const Checkout = () => {
     email: "",
   });
 
-  const [paymentMethod, setPaymentMethod] = useState("whatsapp"); // Default to WhatsApp payment method
+  // "paystack" | "whatsapp" | "bankTransfer"
+  const [paymentMethod, setPaymentMethod] = useState<"paystack" | "whatsapp" | "bankTransfer">("paystack");
+  const [placing, setPlacing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  if (items.length === 0) {
-    return <div>Your cart is empty. Please add items before checking out.</div>;
+  const totalNaira = useMemo(
+    () => items.reduce((sum, it) => sum + (it.price || 0) * (it.qty || 0), 0),
+    [items]
+  );
+
+  if (!items?.length) {
+    return <div className="max-w-3xl mx-auto p-6">Your cart is empty. Please add items before checking out.</div>;
   }
-  const handlePlaceOrder = async () => {
-    // Collect order data
-    const orderData = {
-      items: items,           // Cart items
-      shippingInfo: shippingInfo, // Customer's shipping info
-      paymentMethod: paymentMethod, // Payment method
-    };
 
-    // Generate the WhatsApp message with customer and order details
-    const orderDetails = items
-      .map(
-        (item) => {
-          // Dynamically calculate the total price for each item
-          const totalPrice = item.price * item.qty; 
-          console.log(`Item: ${item.name}, Qty: ${item.qty}, Price: ₦${totalPrice}`);
-          return `Product: ${item.name}, Qty: ${item.qty}, Price: ₦${totalPrice}`;
-        }
-      )
-      .join("\n");
-
-    const message = `
-      *Customer Details:*
-      Name: ${shippingInfo.name}
-      Address: ${shippingInfo.address}
-      Email: ${shippingInfo.email}
-      
-      *Order Details:*
-      ${orderDetails}
-
-      Payment Method: ${paymentMethod}
-    `;
-
-    console.log("WhatsApp Message:", message); // Log the generated WhatsApp message to verify
-
-    const encodedMessage = encodeURIComponent(message); // Encode the message for the URL
-
-    // WhatsApp link with the pre-filled message
-    const whatsappLink = `https://wa.me/2347018239270?text=${encodedMessage}`;
-
-    // Redirect the user to WhatsApp to complete payment
-    window.open(whatsappLink, "_blank");
-
-    // Optionally, navigate to the confirmation page after placing the order
-    navigate("/order-confirmation", { state: { order: orderData } });
-};
-
-
-  // Handle changes in shipping input fields
+  // --- helpers ---
   const handleShippingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setShippingInfo((prev) => ({ ...prev, [name]: value }));
   };
+
+  function validate(): string | null {
+    if (!shippingInfo.name.trim()) return "Please enter your full name.";
+    if (!shippingInfo.address.trim()) return "Please enter your delivery address.";
+    if (!shippingInfo.email.trim() || !/^\S+@\S+\.\S+$/.test(shippingInfo.email)) return "Please enter a valid email.";
+    if (totalNaira < 100) return "Order total must be at least ₦100.";
+    return null;
+  }
+
+  async function startPaystack() {
+    setError(null);
+    const problem = validate();
+    if (problem) { setError(problem); return; }
+
+    setPlacing(true);
+    try {
+      const reference = makeRef("r2b");
+      // keep payload tidy; send a compact items list + customer meta
+      const payload = {
+        email: shippingInfo.email.trim(),
+        amountNaira: totalNaira, // server converts to kobo
+        reference,
+        items: items.map((it) => ({
+          id: it.id,
+          name: it.name,
+          qty: it.qty,
+          price: it.price,
+        })),
+        metadata: {
+          customer: {
+            name: shippingInfo.name.trim(),
+            address: shippingInfo.address.trim(),
+            email: shippingInfo.email.trim(),
+          },
+          source: "r2blaze-web-preview",
+        },
+      };
+
+      const r = await fetch(`${API_BASE}/api/paystack-init`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await r.json();
+      if (!r.ok) {
+        throw new Error(data?.error || "Failed to initialize Paystack");
+      }
+
+      // redirect to Paystack checkout
+      window.location.href = data.authorization_url as string;
+    } catch (e: any) {
+      setError(e?.message || "Something went wrong starting Paystack.");
+      setPlacing(false);
+    }
+  }
+
+  function startWhatsApp() {
+    setError(null);
+    const problem = validate();
+    if (problem) { setError(problem); return; }
+
+    const orderLines = items
+      .map((it) => `• ${it.name} — Qty ${it.qty} — ₦${(it.price * it.qty).toLocaleString()}`)
+      .join("\n");
+
+    const message = `
+*Customer Details*
+Name: ${shippingInfo.name}
+Address: ${shippingInfo.address}
+Email: ${shippingInfo.email}
+
+*Order Details*
+${orderLines}
+
+Total: ₦${totalNaira.toLocaleString()}
+Payment Method: WhatsApp
+    `.trim();
+
+    const encoded = encodeURIComponent(message);
+    const whatsappLink = `https://wa.me/2347018239270?text=${encoded}`;
+    window.open(whatsappLink, "_blank");
+    navigate("/order-confirmation", {
+      state: {
+        order: {
+          items,
+          shippingInfo,
+          paymentMethod: "whatsapp",
+        },
+      },
+    });
+  }
 
   return (
     <div className="checkout-container bg-gray-50 p-6 rounded-lg shadow-lg max-w-3xl mx-auto">
@@ -80,25 +152,25 @@ const Checkout = () => {
         {items.map((item) => (
           <div key={item.id} className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
-              <img
-                src={item.images[0]}
-                alt={item.name}
-                className="w-16 h-16 object-cover rounded"
-              />
+              {item.images?.[0] && (
+                <img
+                  src={item.images[0]}
+                  alt={item.name}
+                  className="w-16 h-16 object-cover rounded"
+                />
+              )}
               <div>
                 <p className="font-medium">{item.name}</p>
-                <p className="text-sm text-gray-600">₦{item.price}</p>
+                <p className="text-sm text-gray-600">₦{item.price.toLocaleString()}</p>
                 <p className="text-sm text-gray-600">Qty: {item.qty}</p>
               </div>
             </div>
-            <p className="font-semibold text-lg">₦{item.price * item.qty}</p>
+            <p className="font-semibold text-lg">₦{(item.price * item.qty).toLocaleString()}</p>
           </div>
         ))}
         <div className="flex justify-between font-semibold text-lg mt-4 border-t pt-4">
           <span>Total</span>
-          <span>
-            ₦{items.reduce((total, item) => total + item.price * item.qty, 0)}
-          </span>
+          <span>₦{totalNaira.toLocaleString()}</span>
         </div>
       </div>
 
@@ -133,9 +205,22 @@ const Checkout = () => {
 
       {/* Payment Method */}
       <div className="payment-info bg-white p-6 rounded-lg shadow-sm mb-6">
-        <h3 className="text-xl font-semibold mb-4">Payment Information</h3>
-        <div className="payment-method mb-4">
-          <label className="block mb-2 font-medium text-lg">
+        <h3 className="text-xl font-semibold mb-4">Payment Method</h3>
+
+        <div className="space-y-2">
+          <label className="block font-medium text-lg">
+            <input
+              type="radio"
+              name="paymentMethod"
+              value="paystack"
+              checked={paymentMethod === "paystack"}
+              onChange={() => setPaymentMethod("paystack")}
+              className="mr-2"
+            />
+            Pay securely online (Paystack)
+          </label>
+
+          <label className="block font-medium text-lg">
             <input
               type="radio"
               name="paymentMethod"
@@ -146,7 +231,8 @@ const Checkout = () => {
             />
             Pay via WhatsApp
           </label>
-          <label className="block mb-2 font-medium text-lg">
+
+          <label className="block font-medium text-lg">
             <input
               type="radio"
               name="paymentMethod"
@@ -159,30 +245,61 @@ const Checkout = () => {
           </label>
         </div>
 
-        {/* Bank Transfer Info */}
         {paymentMethod === "bankTransfer" && (
-          <div className="bank-transfer">
+          <div className="bank-transfer mt-4 rounded-md border p-4">
             <h4 className="font-semibold text-lg mb-2">Bank Details</h4>
             <p>Bank Name: Stanbic Bank</p>
             <p>Account Name: Odeode Emmanuel Gbenga</p>
             <p>Account Number: 0034591441</p>
-           
+            <p className="text-sm text-gray-500 mt-2">
+              After transfer, please send proof of payment to our WhatsApp so we can confirm and ship.
+            </p>
           </div>
         )}
       </div>
 
-      {/* Single Button to Place Order & Send to WhatsApp */}
+      {/* Error */}
+      {error && (
+        <div className="mb-4 rounded-md bg-red-50 border border-red-200 text-red-700 p-3">
+          {error}
+        </div>
+      )}
+
+      {/* Action Button */}
       <div className="text-center">
-        <button
-          onClick={handlePlaceOrder}
-          className="w-full py-4 text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none"
-        >
-          Proceed with Payment on WhatsApp
-        </button>
+        {paymentMethod === "paystack" ? (
+          <button
+            onClick={startPaystack}
+            disabled={placing}
+            className="w-full py-4 text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none disabled:opacity-60"
+          >
+            {placing ? "Starting Paystack..." : "Pay Now with Paystack"}
+          </button>
+        ) : paymentMethod === "whatsapp" ? (
+          <button
+            onClick={startWhatsApp}
+            className="w-full py-4 text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 focus:outline-none"
+          >
+            Proceed via WhatsApp
+          </button>
+        ) : (
+          <button
+            onClick={() => navigate("/order-confirmation", {
+              state: {
+                order: {
+                  items,
+                  shippingInfo,
+                  paymentMethod: "bankTransfer",
+                },
+              },
+            })}
+            className="w-full py-4 text-white bg-slate-700 rounded-lg hover:bg-slate-800 focus:outline-none"
+          >
+            Place Order (Bank Transfer)
+          </button>
+        )}
       </div>
     </div>
   );
-};
-
-export default Checkout;
+}
 

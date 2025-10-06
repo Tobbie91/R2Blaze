@@ -19,6 +19,7 @@ import AdminLogin from "./pages/AdminLogin";
 
 import AdminPage from "./pages/AdminPage";
 import AdminProductEditor from "./pages/AdminUploader";
+import CheckoutSuccess from "./pages/checkoutSuccess";
 
 
 export default function App() {
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/about" element={<About />} />
         <Route path="/policies" element={<Policies />} />
         <Route path="/order-confirmation" element={<OrderConfirmation />} />
+        <Route path="/checkout/success" element={<CheckoutSuccess />} />
       </Route>
 
       {/* Admin login is public (no layout) */}
