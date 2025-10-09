@@ -71,7 +71,7 @@ export default function Navbar() {
           <NavLink to="/products" className={({ isActive }) => linkClass(isActive)}>Shop</NavLink>
           <NavLink to="/about" className={({ isActive }) => linkClass(isActive)}>About</NavLink>
           <NavLink to="/policies" className={({ isActive }) => linkClass(isActive)}>Policies</NavLink>
-          <NavLink to="/contact" className={({ isActive }) => linkClass(isActive)}>Contact</NavLink>
+          <NavLink to="/contact" className={({ isActive }) => linkClass(isActive)}>Contact Us</NavLink>
 
           {/* Right actions */}
           <div className="ml-2 flex items-center gap-1">

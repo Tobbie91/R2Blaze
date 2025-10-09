@@ -10,15 +10,14 @@ function makeRef(prefix = "r2b"): string {
 type CartItem = {
   id: string;
   name: string;
-  price: number; 
+  price: number;
   qty: number;
   images: string[];
-
 };
 
 const API_BASE =
   import.meta.env.VITE_R2BLAZE_API_BASE ||
-  "https://r2blaze-ofphn67zr-oluwatobi-s-projects.vercel.app"; 
+  "https://r2blaze-ofphn67zr-oluwatobi-s-projects.vercel.app";
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -31,10 +30,6 @@ export default function Checkout() {
     phone: "",
   });
 
-  // "paystack" | "whatsapp" | "bankTransfer"
-  const [paymentMethod, setPaymentMethod] = useState<
-    "paystack" | "whatsapp" | "bankTransfer"
-  >("paystack");
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,12 +54,8 @@ export default function Checkout() {
 
   function validate(): string | null {
     if (!shippingInfo.name.trim()) return "Please enter your full name.";
-    if (!shippingInfo.address.trim())
-      return "Please enter your delivery address.";
-    if (
-      !shippingInfo.email.trim() ||
-      !/^\S+@\S+\.\S+$/.test(shippingInfo.email)
-    )
+    if (!shippingInfo.address.trim()) return "Please enter your delivery address.";
+    if (!shippingInfo.email.trim() || !/^\S+@\S+\.\S+$/.test(shippingInfo.email))
       return "Please enter a valid email.";
     if (totalNaira < 100) return "Order total must be at least ₦100.";
     return null;
@@ -81,7 +72,6 @@ export default function Checkout() {
     setPlacing(true);
     try {
       const reference = makeRef("r2b");
-      // keep payload tidy; send a compact items list + customer meta
       const payload = {
         email: shippingInfo.email.trim(),
         amountNaira: totalNaira, // server converts to kobo
@@ -114,56 +104,12 @@ export default function Checkout() {
         throw new Error(data?.error || "Failed to initialize Paystack");
       }
 
-      // redirect to Paystack checkout
+      // Redirect to Paystack checkout
       window.location.href = data.authorization_url as string;
     } catch (e: any) {
       setError(e?.message || "Something went wrong starting Paystack.");
       setPlacing(false);
     }
-  }
-
-  function startWhatsApp() {
-    setError(null);
-    const problem = validate();
-    if (problem) {
-      setError(problem);
-      return;
-    }
-
-    const orderLines = items
-      .map(
-        (it) =>
-          `• ${it.name} — Qty ${it.qty} — ₦${(
-            it.price * it.qty
-          ).toLocaleString()}`
-      )
-      .join("\n");
-
-    const message = `
-*Customer Details*
-Name: ${shippingInfo.name}
-Address: ${shippingInfo.address}
-Email: ${shippingInfo.email}
-
-*Order Details*
-${orderLines}
-
-Total: ₦${totalNaira.toLocaleString()}
-Payment Method: WhatsApp
-    `.trim();
-
-    const encoded = encodeURIComponent(message);
-    const whatsappLink = `https://wa.me/2347018239270?text=${encoded}`;
-    window.open(whatsappLink, "_blank");
-    navigate("/order-confirmation", {
-      state: {
-        order: {
-          items,
-          shippingInfo,
-          paymentMethod: "whatsapp",
-        },
-      },
-    });
   }
 
   return (
@@ -231,7 +177,7 @@ Payment Method: WhatsApp
           onChange={handleShippingChange}
           autoComplete="tel"
           inputMode="tel"
-          pattern="^[0-9+\-\s()]*$"
+          pattern="^[0-9+\\-\\s()]*$"
           className="w-full p-4 mb-4 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600"
         />
         <input
@@ -244,60 +190,24 @@ Payment Method: WhatsApp
         />
       </div>
 
-      {/* Payment Method */}
+      {/* Payment (Paystack only) */}
       <div className="payment-info bg-white p-6 rounded-lg shadow-sm mb-6">
         <h3 className="text-xl font-semibold mb-4">Payment Method</h3>
 
-        <div className="space-y-2">
-          <label className="block font-medium text-lg">
-            <input
-              type="radio"
-              name="paymentMethod"
-              value="paystack"
-              checked={paymentMethod === "paystack"}
-              onChange={() => setPaymentMethod("paystack")}
-              className="mr-2"
-            />
-            Pay securely online (Paystack)
-          </label>
+        {/* Hidden field if you submit to backend */}
+        <input type="hidden" name="paymentMethod" value="paystack" />
 
-          <label className="block font-medium text-lg">
-            <input
-              type="radio"
-              name="paymentMethod"
-              value="whatsapp"
-              checked={paymentMethod === "whatsapp"}
-              onChange={() => setPaymentMethod("whatsapp")}
-              className="mr-2"
-            />
-            Pay via WhatsApp
-          </label>
-
-          <label className="block font-medium text-lg">
-            <input
-              type="radio"
-              name="paymentMethod"
-              value="bankTransfer"
-              checked={paymentMethod === "bankTransfer"}
-              onChange={() => setPaymentMethod("bankTransfer")}
-              className="mr-2"
-            />
-            Bank Transfer
-          </label>
-        </div>
-
-        {paymentMethod === "bankTransfer" && (
-          <div className="bank-transfer mt-4 rounded-md border p-4">
-            <h4 className="font-semibold text-lg mb-2">Bank Details</h4>
-            <p>Bank Name: Stanbic Bank</p>
-            <p>Account Name: Odeode Emmanuel Gbenga</p>
-            <p>Account Number: 0034591441</p>
-            <p className="text-sm text-gray-500 mt-2">
-              After transfer, please send proof of payment to our WhatsApp so we
-              can confirm and ship.
+        <div className="flex items-start gap-3">
+          <span className="mt-1 inline-flex h-5 w-5 rounded-full border-2 border-emerald-600">
+            <span className="m-[3px] inline-block h-3 w-3 rounded-full bg-emerald-600" />
+          </span>
+          <div>
+            <p className="font-medium text-lg">Pay securely online (Paystack)</p>
+            <p className="text-sm text-gray-500">
+              Cards • Bank • USSD • Transfers (processed by Paystack)
             </p>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Error */}
@@ -307,41 +217,15 @@ Payment Method: WhatsApp
         </div>
       )}
 
-      {/* Action Button */}
+      {/* Action */}
       <div className="text-center">
-        {paymentMethod === "paystack" ? (
-          <button
-            onClick={startPaystack}
-            disabled={placing}
-            className="w-full py-4 text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none disabled:opacity-60"
-          >
-            {placing ? "Starting Paystack..." : "Pay Now with Paystack"}
-          </button>
-        ) : paymentMethod === "whatsapp" ? (
-          <button
-            onClick={startWhatsApp}
-            className="w-full py-4 text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 focus:outline-none"
-          >
-            Proceed via WhatsApp
-          </button>
-        ) : (
-          <button
-            onClick={() =>
-              navigate("/order-confirmation", {
-                state: {
-                  order: {
-                    items,
-                    shippingInfo,
-                    paymentMethod: "bankTransfer",
-                  },
-                },
-              })
-            }
-            className="w-full py-4 text-white bg-slate-700 rounded-lg hover:bg-slate-800 focus:outline-none"
-          >
-            Place Order (Bank Transfer)
-          </button>
-        )}
+        <button
+          onClick={startPaystack}
+          disabled={placing}
+          className="w-full py-4 text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none disabled:opacity-60"
+        >
+          {placing ? "Starting Paystack..." : "Pay Now with Paystack"}
+        </button>
       </div>
     </div>
   );
