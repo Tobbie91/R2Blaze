@@ -30,7 +30,7 @@ const Footer = () => {
           {/* Column 3 */}
           <div>
             <h4 className="text-xl font-semibold">Contact</h4>
-            <p className="mt-2 text-gray-400">Email: support@example.com</p>
+            <p className="mt-2 text-gray-400">Email: Dblazing22@gmail.com</p>
             <p className="text-gray-400">Phone: 123-456-7890</p>
           </div>
 

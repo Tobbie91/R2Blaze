@@ -96,47 +96,6 @@ useEffect(() => {
   }
   
 
-//   useEffect(() => {
-//     let alive = true;
-//     (async () => {
-//       setLoading(true);
-//       setErr(null);
-//       try {
-//         // totals
-//         const { count: prodCount, error: c1 } = await supabase
-//           .from("products")
-//           .select("*", { count: "exact", head: true });
-//         if (c1) throw c1;
-
-//         const { count: imgCount, error: c2 } = await supabase
-//           .from("product_images")
-//           .select("*", { count: "exact", head: true });
-//         if (c2) throw c2;
-
-//         // recent products (latest 8) — no gender selected
-//         const { data: recents, error: r1 } = await supabase
-//           .from("products")
-//           .select("id,name,slug,price,prev_price,created_at,updated_at")
-//           .order("updated_at", { ascending: false })
-//           .order("created_at", { ascending: false })
-//           .limit(8);
-//         if (r1) throw r1;
-
-//         if (!alive) return;
-//         setCounts({ products: prodCount ?? 0, images: imgCount ?? 0 });
-//         setProducts(recents ?? []);
-//       } catch (e: any) {
-//         if (!alive) return;
-//         setErr(e.message || String(e));
-//       } finally {
-//         if (alive) setLoading(false);
-//       }
-//     })();
-//     return () => {
-//       alive = false;
-//     };
-//   }, []);
-
   const totalValue = useMemo(() => {
     const sum = products.reduce((acc, p) => acc + (Number(p.price) || 0), 0);
     return sum;
@@ -172,7 +131,7 @@ useEffect(() => {
           </Link>
           <button
             onClick={goCreateProduct}
-            className="rounded-lg bg-emerald-700 px-3 py-2 text-sm text-white hover:bg-emerald-800"
+            className="rounded-lg bg-black px-3 py-2 text-sm text-white hover:bg-black"
           >
             + Create New product
           </button>
@@ -216,7 +175,7 @@ useEffect(() => {
           />
           <button
             onClick={jumpTo}
-            className="mt-3 w-full rounded-lg bg-emerald-700 px-3 py-2 text-sm text-white hover:bg-emerald-800"
+            className="mt-3 w-full rounded-lg bg-black px-3 py-2 text-sm text-white hover:bg-black"
           >
             Open editor
           </button>

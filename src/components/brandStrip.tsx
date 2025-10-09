@@ -21,9 +21,10 @@ export default function BrandStrip({
           <Link
             key={b.toLowerCase().trim()} // stable key
             to={`/products?brand=${encodeURIComponent(b)}`}
-            className="shrink-0 snap-start px-3 py-1.5 rounded-full border border-gray-200 text-gray-600
-                       text-xs sm:text-[13px] hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-800
-                       transition-colors"
+            className="shrink-0 snap-start px-3.5 py-1.5 rounded-full border border-white/70 bg-white/60 backdrop-blur
+            text-gray-700 text-xs sm:text-[13px] hover:bg-white hover:border-emerald-300 hover:text-emerald-800
+            transition-colors shadow-sm"
+ 
             aria-label={`Shop ${b}`}
             title={b}
           >

@@ -47,9 +47,10 @@ export default function ProductCardPro({ p }: { p: any }) {
   const discount = hasOld ? Math.round(((old - price) / old) * 100) : 0;
 
   const slug = (p.slug || String(p.id)).toString().trim().toLowerCase().replace(/\s+/g, "-");
-  const handle = p.slug || String(p.id);
+
   return (
-    <Link to={`/products/${encodeURIComponent(handle)}`} 
+    <Link
+      to={`/products/${slug}`}
       className="group rounded-2xl border border-gray-200/80 bg-white/90 backdrop-blur
                  shadow-sm hover:shadow-md hover:border-emerald-200 transition overflow-hidden"
     >
@@ -96,4 +97,3 @@ export default function ProductCardPro({ p }: { p: any }) {
     </Link>
   );
 }
-

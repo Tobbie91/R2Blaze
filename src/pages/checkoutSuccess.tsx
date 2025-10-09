@@ -1,26 +1,34 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-// If you have a cart store, import it to clear after success
 import { useCart } from "../store/cart";
 
 const API_BASE =
   import.meta.env.VITE_R2BLAZE_API_BASE ||
-  "https://r2blaze-kywfiom78-oluwatobi-s-projects.vercel.app"; // your preview API
+  "https://r2blaze-kywfiom78-oluwatobi-s-projects.vercel.app";
 
 type VerifyResponse = { ok: boolean; data?: any; error?: string };
 
 export default function CheckoutSuccess() {
   const [params] = useSearchParams();
-  const ref = params.get("ref") || "";
-  const tries = useRef(0);
-  const { clear } = useCart?.() || { clear: () => {} };
+  // Paystack standard redirect appends ?reference=... ; support both just in case
+  const reference = params.get("reference") || params.get("ref") || "";
+  const triesRef = useRef(0);
+  const stateRef = useRef<"checking" | "ok" | "pending" | "fail">("checking");
 
-  type State = "checking" | "ok" | "pending" | "fail";
-  const [state, setState] = useState<State>(ref ? "checking" : "fail");
+  // ✅ Always call hooks
+  const { clear } = useCart(); // ensure store exports a no-op clear if not implemented
+
+  const [state, setState] = useState<"checking" | "ok" | "pending" | "fail">(
+    reference ? "checking" : "fail"
+  );
   const [details, setDetails] = useState<any>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  // Load order snapshot if we saved it
+  function setStateSafe(next: typeof state) {
+    stateRef.current = next;
+    setState(next);
+  }
+
   const orderSnapshot = useMemo(() => {
     try {
       const raw = sessionStorage.getItem("r2b_last_order");
@@ -30,63 +38,69 @@ export default function CheckoutSuccess() {
     }
   }, []);
 
-  async function checkOnce() {
-    if (!ref) return setState("fail");
+  async function verifyOnce() {
+    if (!reference) return setStateSafe("fail");
     try {
-      const r = await fetch(`${API_BASE}/api/paystack-verify?reference=${encodeURIComponent(ref)}`);
+      const r = await fetch(
+        `${API_BASE}/api/paystack-verify?reference=${encodeURIComponent(reference)}`
+      );
       const data: VerifyResponse = await r.json();
       if (!r.ok) throw new Error(data?.error || "Verify failed");
 
       setDetails(data?.data || null);
 
       if (data.ok) {
-        setState("ok");
-        // Clear cart once we know it's paid
-        try { clear?.(); } catch {}
-        // You can also clear the snapshot now if you want
+        setStateSafe("ok");
+        try {
+          clear(); // empty cart on confirmed payment
+        } catch {}
         // sessionStorage.removeItem("r2b_last_order");
       } else {
-        // Paystack may return statuses like 'abandoned' or 'failed'
-        const status = data?.data?.status || "pending";
-        setState(status === "failed" ? "fail" : "pending");
+        const status = data?.data?.status || "pending"; // e.g., 'abandoned', 'failed'
+        setStateSafe(status === "failed" ? "fail" : "pending");
       }
     } catch (e: any) {
       setErr(e?.message || "Unable to verify payment.");
-      setState("pending"); // allow polling; webhook might still be on the way
+      setStateSafe("pending"); // allow subsequent retries
     }
   }
 
   useEffect(() => {
-    if (!ref) return;
+    if (!reference) return;
 
-    // Initial check
-    checkOnce();
+    let cancelled = false;
 
-    // Poll up to ~30s (10 tries x 3s) while pending
-    const id = setInterval(() => {
-      if (state === "ok" || state === "fail") {
-        clearInterval(id);
-        return;
+    const tick = async () => {
+      if (cancelled) return;
+      if (stateRef.current === "ok" || stateRef.current === "fail") return;
+      if (triesRef.current >= 10) return; // ~30s total with 3s steps
+
+      triesRef.current += 1;
+      await verifyOnce();
+
+      if (!cancelled && stateRef.current === "pending" && triesRef.current < 10) {
+        setTimeout(tick, 3000);
       }
-      if (tries.current >= 10) {
-        clearInterval(id);
-        return;
-      }
-      tries.current += 1;
-      checkOnce();
-    }, 3000);
+    };
 
-    return () => clearInterval(id);
+    // initial verify + schedule
+    verifyOnce().then(() => {
+      if (stateRef.current === "pending") setTimeout(tick, 3000);
+    });
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ref]);
+  }, [reference]);
 
   return (
     <div className="max-w-3xl mx-auto bg-white rounded-xl shadow p-6 mt-6">
       <h1 className="text-2xl font-semibold mb-3">Payment Status</h1>
 
-      {!ref && (
+      {!reference && (
         <div className="rounded-md bg-red-50 border border-red-200 text-red-700 p-3 mb-4">
-          Missing reference. Please check your link.
+          Missing payment reference in the URL. Please check your link.
         </div>
       )}
 
@@ -111,19 +125,18 @@ export default function CheckoutSuccess() {
 
       {state === "fail" && (
         <div className="rounded-md bg-red-50 border border-red-200 text-red-700 p-3 mb-4">
-          We couldn’t confirm this payment. If you were charged, don’t worry—our system will reconcile
-          shortly. Please contact support with your reference.
+          We couldn’t confirm this payment. If you were charged, our system will reconcile shortly.
+          Please contact support with your reference.
         </div>
       )}
 
-      {/* Reference + actions */}
-      {ref && (
+      {reference && (
         <div className="mb-6">
           <div className="text-sm text-gray-600">Reference:</div>
           <div className="flex items-center gap-2 mt-1">
-            <code className="px-2 py-1 bg-gray-100 rounded text-gray-800">{ref}</code>
+            <code className="px-2 py-1 bg-gray-100 rounded text-gray-800">{reference}</code>
             <button
-              onClick={() => navigator.clipboard.writeText(ref)}
+              onClick={() => navigator.clipboard.writeText(reference)}
               className="px-2 py-1 text-sm rounded bg-gray-200 hover:bg-gray-300"
             >
               Copy
@@ -132,7 +145,6 @@ export default function CheckoutSuccess() {
         </div>
       )}
 
-      {/* Summary (from sessionStorage snapshot) */}
       {orderSnapshot && (
         <div className="border rounded-lg p-4 mb-6">
           <h2 className="font-semibold mb-2">Order Summary</h2>
@@ -156,19 +168,12 @@ export default function CheckoutSuccess() {
         </div>
       )}
 
-      {/* Next steps */}
       {state === "ok" ? (
         <div className="flex gap-3">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center px-4 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700"
-          >
+          <Link to="/" className="px-4 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700">
             Continue Shopping
           </Link>
-          <Link
-            to="/orders"
-            className="inline-flex items-center justify-center px-4 py-2 rounded border border-gray-300 hover:bg-gray-50"
-          >
+          <Link to="/orders" className="px-4 py-2 rounded border border-gray-300 hover:bg-gray-50">
             View Orders
           </Link>
         </div>
@@ -176,7 +181,7 @@ export default function CheckoutSuccess() {
         <div className="flex gap-3">
           <button
             onClick={() => window.location.reload()}
-            className="inline-flex items-center justify-center px-4 py-2 rounded border border-gray-300 hover:bg-gray-50"
+            className="px-4 py-2 rounded border border-gray-300 hover:bg-gray-50"
           >
             Refresh Status
           </button>
@@ -184,7 +189,7 @@ export default function CheckoutSuccess() {
             href="https://wa.me/2347018239270"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center justify-center px-4 py-2 rounded bg-slate-800 text-white hover:bg-slate-900"
+            className="px-4 py-2 rounded bg-slate-800 text-white hover:bg-slate-900"
           >
             Contact Support
           </a>

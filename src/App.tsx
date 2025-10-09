@@ -20,6 +20,7 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminPage from "./pages/AdminPage";
 import AdminProductEditor from "./pages/AdminUploader";
 import CheckoutSuccess from "./pages/checkoutSuccess";
+import ContactForm from "./pages/contact";
 
 
 export default function App() {
@@ -29,10 +30,12 @@ export default function App() {
       <Route element={<SiteLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/products" element={<Products />} />
-        <Route path="/products/:id" element={<Product />} />
+<Route path="/products/:handle" element={<Product />} />
+
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<ContactForm/>} />
         <Route path="/policies" element={<Policies />} />
         <Route path="/order-confirmation" element={<OrderConfirmation />} />
         <Route path="/checkout/success" element={<CheckoutSuccess />} />

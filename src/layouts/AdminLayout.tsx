@@ -7,6 +7,7 @@ export default function AdminLayout() {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <header className="border-b bg-white">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+        <Link to="/" className="font-semibold">Back</Link>
           <Link to="/admin" className="font-semibold">Admin</Link>
           <nav className="flex items-center gap-3 text-sm">
             <Link to="/admin/uploader/new" className="hover:underline">Uploader</Link>

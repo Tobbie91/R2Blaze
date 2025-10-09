@@ -10,15 +10,15 @@ function makeRef(prefix = "r2b"): string {
 type CartItem = {
   id: string;
   name: string;
-  price: number; // in Naira
+  price: number; 
   qty: number;
   images: string[];
-  // optional: slug, color, size, etc...
+
 };
 
 const API_BASE =
   import.meta.env.VITE_R2BLAZE_API_BASE ||
-  "https://r2blaze-kywfiom78-oluwatobi-s-projects.vercel.app"; // fallback to your preview (test mode)
+  "https://r2blaze-ofphn67zr-oluwatobi-s-projects.vercel.app"; 
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -28,10 +28,13 @@ export default function Checkout() {
     name: "",
     address: "",
     email: "",
+    phone: "",
   });
 
   // "paystack" | "whatsapp" | "bankTransfer"
-  const [paymentMethod, setPaymentMethod] = useState<"paystack" | "whatsapp" | "bankTransfer">("paystack");
+  const [paymentMethod, setPaymentMethod] = useState<
+    "paystack" | "whatsapp" | "bankTransfer"
+  >("paystack");
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,7 +44,11 @@ export default function Checkout() {
   );
 
   if (!items?.length) {
-    return <div className="max-w-3xl mx-auto p-6">Your cart is empty. Please add items before checking out.</div>;
+    return (
+      <div className="max-w-3xl mx-auto p-6">
+        Your cart is empty. Please add items before checking out.
+      </div>
+    );
   }
 
   // --- helpers ---
@@ -52,8 +59,13 @@ export default function Checkout() {
 
   function validate(): string | null {
     if (!shippingInfo.name.trim()) return "Please enter your full name.";
-    if (!shippingInfo.address.trim()) return "Please enter your delivery address.";
-    if (!shippingInfo.email.trim() || !/^\S+@\S+\.\S+$/.test(shippingInfo.email)) return "Please enter a valid email.";
+    if (!shippingInfo.address.trim())
+      return "Please enter your delivery address.";
+    if (
+      !shippingInfo.email.trim() ||
+      !/^\S+@\S+\.\S+$/.test(shippingInfo.email)
+    )
+      return "Please enter a valid email.";
     if (totalNaira < 100) return "Order total must be at least ₦100.";
     return null;
   }
@@ -61,7 +73,10 @@ export default function Checkout() {
   async function startPaystack() {
     setError(null);
     const problem = validate();
-    if (problem) { setError(problem); return; }
+    if (problem) {
+      setError(problem);
+      return;
+    }
 
     setPlacing(true);
     try {
@@ -82,6 +97,7 @@ export default function Checkout() {
             name: shippingInfo.name.trim(),
             address: shippingInfo.address.trim(),
             email: shippingInfo.email.trim(),
+            phone: shippingInfo.phone.trim(),
           },
           source: "r2blaze-web-preview",
         },
@@ -109,10 +125,18 @@ export default function Checkout() {
   function startWhatsApp() {
     setError(null);
     const problem = validate();
-    if (problem) { setError(problem); return; }
+    if (problem) {
+      setError(problem);
+      return;
+    }
 
     const orderLines = items
-      .map((it) => `• ${it.name} — Qty ${it.qty} — ₦${(it.price * it.qty).toLocaleString()}`)
+      .map(
+        (it) =>
+          `• ${it.name} — Qty ${it.qty} — ₦${(
+            it.price * it.qty
+          ).toLocaleString()}`
+      )
       .join("\n");
 
     const message = `
@@ -144,7 +168,9 @@ Payment Method: WhatsApp
 
   return (
     <div className="checkout-container bg-gray-50 p-6 rounded-lg shadow-lg max-w-3xl mx-auto">
-      <h2 className="text-3xl font-semibold text-center text-green-600 mb-8">Checkout</h2>
+      <h2 className="text-3xl font-semibold text-center text-green-600 mb-8">
+        Checkout
+      </h2>
 
       {/* Order Summary */}
       <div className="order-summary bg-white p-6 rounded-lg shadow-sm mb-6">
@@ -161,11 +187,15 @@ Payment Method: WhatsApp
               )}
               <div>
                 <p className="font-medium">{item.name}</p>
-                <p className="text-sm text-gray-600">₦{item.price.toLocaleString()}</p>
+                <p className="text-sm text-gray-600">
+                  ₦{item.price.toLocaleString()}
+                </p>
                 <p className="text-sm text-gray-600">Qty: {item.qty}</p>
               </div>
             </div>
-            <p className="font-semibold text-lg">₦{(item.price * item.qty).toLocaleString()}</p>
+            <p className="font-semibold text-lg">
+              ₦{(item.price * item.qty).toLocaleString()}
+            </p>
           </div>
         ))}
         <div className="flex justify-between font-semibold text-lg mt-4 border-t pt-4">
@@ -191,6 +221,17 @@ Payment Method: WhatsApp
           placeholder="Street Address"
           value={shippingInfo.address}
           onChange={handleShippingChange}
+          className="w-full p-4 mb-4 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600"
+        />
+        <input
+          type="tel"
+          name="phone"
+          placeholder="Phone Number"
+          value={shippingInfo.phone}
+          onChange={handleShippingChange}
+          autoComplete="tel"
+          inputMode="tel"
+          pattern="^[0-9+\-\s()]*$"
           className="w-full p-4 mb-4 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600"
         />
         <input
@@ -252,7 +293,8 @@ Payment Method: WhatsApp
             <p>Account Name: Odeode Emmanuel Gbenga</p>
             <p>Account Number: 0034591441</p>
             <p className="text-sm text-gray-500 mt-2">
-              After transfer, please send proof of payment to our WhatsApp so we can confirm and ship.
+              After transfer, please send proof of payment to our WhatsApp so we
+              can confirm and ship.
             </p>
           </div>
         )}
@@ -284,15 +326,17 @@ Payment Method: WhatsApp
           </button>
         ) : (
           <button
-            onClick={() => navigate("/order-confirmation", {
-              state: {
-                order: {
-                  items,
-                  shippingInfo,
-                  paymentMethod: "bankTransfer",
+            onClick={() =>
+              navigate("/order-confirmation", {
+                state: {
+                  order: {
+                    items,
+                    shippingInfo,
+                    paymentMethod: "bankTransfer",
+                  },
                 },
-              },
-            })}
+              })
+            }
             className="w-full py-4 text-white bg-slate-700 rounded-lg hover:bg-slate-800 focus:outline-none"
           >
             Place Order (Bank Transfer)
@@ -302,4 +346,3 @@ Payment Method: WhatsApp
     </div>
   );
 }
-
