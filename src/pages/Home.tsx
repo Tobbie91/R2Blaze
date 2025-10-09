@@ -4,11 +4,11 @@ import { Link } from "react-router-dom";
 import ProductCard from "../components/ProductCardPro"; 
 import Hero from "../components/hero";
 import BrandStrip from "../components/brandStrip";
-import Section from "../components/Section";
+// import Section from "../components/Section";
 import NewItems from "../components/newitems";
 import Highlights from "../components/highlights";
 import FullBleed from "../components/FullBleed";
-import { Page } from "../components/Page";
+import Section, { Page } from "../components/Page";
 import { supabase } from "../components/supabase";
 
 export default function Home() {
@@ -53,14 +53,13 @@ export default function Home() {
         <FullBleed>
           <Hero />
         </FullBleed>
-     {/* @ts-ignore */}
+
         <Section title="Shop by brand" subtitle="Discover signatures from our favorite makers">
           <BrandStrip brands={brands} max={14} />
         </Section>
 
         <Section
           title="New arrivals"
-          // @ts-ignore
           subtitle="Fresh drops curated weekly"
           action={
             <Link to="/products" className="text-emerald-700 hover:underline">
@@ -70,7 +69,6 @@ export default function Home() {
         >
           <NewItems limit={8} />
         </Section>
-         {/* @ts-ignore */}
         <Section title="Featured" subtitle="Editor’s picks for you">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {(loading ? Array.from({ length: 8 }) : products.slice(0, 8)).map((p: any, i) =>
