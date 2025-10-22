@@ -16,7 +16,7 @@ const getImageList = (images: any): string[] => {
 };
 
 const firstOr = (arr: string[], fallback = "") => (arr?.length ? arr[0] : fallback);
-
+const currencyNGN = new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN" });
 // Add Cloudinary quality & DPR bump
 const cldEnhance = (url: string) =>
   /res\.cloudinary\.com/.test(url)
@@ -89,7 +89,7 @@ export default function ProductCardPro({ p }: { p: any }) {
         </h3>
 
         <div className="mt-2 flex items-baseline gap-2">
-          <span className="text-lg font-semibold">{price > 0 ? ngn.format(price) : "—"}</span>
+          <span className="text-lg font-semibold">{currencyNGN.format(price)}</span>
           {hasOld && <span className="text-sm text-gray-500 line-through">{ngn.format(old)}</span>}
         </div>
       </div>

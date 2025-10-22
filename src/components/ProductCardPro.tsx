@@ -45,7 +45,7 @@ export default function ProductCardPro({ p }: { p: any }) {
     ) || 0;
   const hasOld = old > 0 && price > 0 && old > price;
   const discount = hasOld ? Math.round(((old - price) / old) * 100) : 0;
-
+  const currencyNGN = new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN" });
   const slug = (p.slug || String(p.id)).toString().trim().toLowerCase().replace(/\s+/g, "-");
 
   return (
@@ -90,7 +90,7 @@ export default function ProductCardPro({ p }: { p: any }) {
         </h3>
 
         <div className="mt-2 flex items-baseline gap-2">
-          <span className="text-lg font-semibold">{price > 0 ? ngn.format(price) : "—"}</span>
+          <span className="text-lg font-semibold">{currencyNGN.format(price)}</span>
           {hasOld && <span className="text-sm text-gray-500 line-through">{ngn.format(old)}</span>}
         </div>
       </div>

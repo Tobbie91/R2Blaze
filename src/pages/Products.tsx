@@ -3,7 +3,7 @@ import { useSearchParams, Link } from "react-router-dom";
 import { supabase } from "../components/supabase";
 import ProductCard from "../components/ProductCard"; // or your Pro card
 
-type ProductRow = {
+export type ProductRow = {
   id: string;
   slug: string;
   name: string;
@@ -316,7 +316,7 @@ function HeaderBar({
 }
 
 // glassy chips with edge fades + wrap fallback
-function BrandChips({
+export function BrandChips({
   brands,
   q,
   normalizedBrandParam,
@@ -335,11 +335,11 @@ function BrandChips({
         className="flex gap-2 overflow-x-auto px-1 -mx-1 snap-x snap-mandatory"
         style={{ scrollPaddingLeft: 8, scrollPaddingRight: 8 }}
       >
-        <Pill
+        {/* <Pill
           to={`/products${q ? `?q=${encodeURIComponent(q)}` : ""}`}
           active={!normalizedBrandParam}
           label="All brands"
-        />
+        /> */}
 
         {brands.map((b) => (
           <Pill
